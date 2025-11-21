@@ -1,0 +1,244 @@
+<!-- Cybercrime-Themed BuildFlow (Full HTML + CSS + JS) --><!-- NOTE: Paste this into your editor. Everything is redesigned with neon, cyberpunk, hacker-grid aesthetics. --><!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BuildFlow — CyberSec Edition</title>
+<style>
+    /* ===== CYBERPUNK VARIABLES ===== */
+    :root {
+        --bg: #030712;
+        --panel: rgba(17, 25, 40, 0.85);
+        --border: rgba(0, 255, 153, 0.4);
+        --text: #e2e8f0;
+        --accent: #00ff9d;
+        --accent-glow: 0 0 12px #00ff9d;
+        --danger: #ff2e63;
+        --warning: #f5b914;
+        --radius: 12px;
+        --grid-color: rgba(0, 255, 153, 0.08);
+        --transition: 200ms ease;
+        --font: "Orbitron", sans-serif;
+    }body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    overflow-x: hidden;
+}
+
+/* ===== CYBER GRID BACKGROUND ===== */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+header {
+    position: sticky;
+    top: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    padding: 18px 40px;
+    border-bottom: 1px solid var(--border);
+    z-index: 999;
+}
+
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 28px;
+    font-weight: bold;
+    color: var(--accent);
+    text-shadow: var(--accent-glow);
+}
+
+.nav-links {
+    display: flex;
+    gap: 30px;
+}
+
+.nav-link {
+    color: var(--text);
+    text-decoration: none;
+    transition: var(--transition);
+}
+
+.nav-link:hover {
+    color: var(--accent);
+    text-shadow: var(--accent-glow);
+}
+
+.container {
+    max-width: 1250px;
+    margin: auto;
+    padding: 40px 20px;
+}
+
+/* ===== HERO SECTION ===== */
+.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 80px 0;
+}
+
+.hero h1 {
+    font-size: 42px;
+    color: var(--accent);
+    text-shadow: var(--accent-glow);
+}
+
+.hero p {
+    width: 80%;
+    font-size: 18px;
+    opacity: 0.85;
+    margin-top: 10px;
+}
+
+.btn {
+    padding: 12px 28px;
+    border-radius: var(--radius);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    background: transparent;
+    cursor: pointer;
+    transition: var(--transition);
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.btn:hover {
+    background: var(--accent);
+    color: #000;
+    box-shadow: var(--accent-glow);
+    transform: translateY(-3px);
+}
+
+/* ===== FEATURE CARDS ===== */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 40px;
+}
+
+.card {
+    background: var(--panel);
+    padding: 25px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(10px);
+    transition: var(--transition);
+}
+
+.card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--accent-glow);
+    transform: translateY(-5px);
+}
+
+/* ===== DEMO SECTION ===== */
+.demo-section {
+    margin-top: 80px;
+    padding: 40px;
+    background: rgba(0, 255, 153, 0.05);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+}
+
+.demo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.demo-item {
+    padding: 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--panel);
+    text-align: center;
+    transition: var(--transition);
+}
+
+.demo-item:hover {
+    border-color: var(--accent);
+    box-shadow: var(--accent-glow);
+    transform: translateY(-4px);
+}
+
+.demo-stat {
+    font-size: 30px;
+    color: var(--accent);
+    text-shadow: var(--accent-glow);
+}
+
+/* ===== ADMIN PANEL ===== */
+.admin-panel {
+    margin-top: 80px;
+    padding: 30px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.status-badge {
+    background: var(--accent);
+    padding: 4px 10px;
+    color: #000;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: var(--accent-glow);
+}
+
+input, textarea, select {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-top: 8px;
+}
+
+input:focus, textarea:focus {
+    border-color: var(--accent);
+    box-shadow: var(--accent-glow);
+    outline: none;
+}
+
+footer {
+    text-align: center;
+    padding: 40px 0;
+    margin-top: 50px;
+    opacity: 0.7;
+}
+
+</style>
+</head>
+<body><header>
+    <nav>
+        <div class="logo">BUILD<span style="color:#fff">FLOW</span></div>
+        <div class="nav-links">
+            <a class="nav-link" href="#features">Features</a>
+            <a class="nav-link" href="#demo">Demo</a>
+            <a class="nav-link" href="#contact">Contact</a>
+        </div>
+    </nav>
+</header><div class="container"><!-- HERO -->
+<section class="hero">
+    <div>
+        <h1>CyberPunk Project Management</h1>
+        <p>Welcome to BuildFlow — redesigned with a neon cybercrime aesthetic.

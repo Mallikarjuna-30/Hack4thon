@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Hackathon — Fraud & Phishing Lab</title>
+<style>
+:root{
+  --bg:#0f1720; --card-bg: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.12);
+  --accent: rgba(85,170,255,0.95);
+  --accent-2: #7be495;
+  --danger: #ff6b6b; --safe: #7be495;
+  --muted: rgba(255,255,255,0.6);
+  --glass-blur: 14px; --radius:18px; --glass-inset: rgba(255,255,255,0.02);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background: radial-gradient(1200px 600px at 12% 12%, rgba(85,170,255,0.06), transparent 8%),
+              radial-gradient(900px 400px at 88% 88%, rgba(123,229,149,0.03), transparent 10%),
+              var(--bg);
+  color:#fff; padding:26px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+}
+/* particles */
+.particles{position:fixed; inset:0; pointer-events:none}
+.particle{position:absolute; width:6px; height:6px; background:rgba(255,255,255,0.12); border-radius:50%; filter:blur(0.6px);}
+@keyframes floatUp{from{transform:translateY(40px) scale(0.8); opacity:0} to{transform:translateY(-120vh) scale(1.3); opacity:1}}
+
+.container{display:grid; grid-template-columns:1fr 420px; gap:22px; align-items:start; max-width:1200px; margin:0 auto}
+.glass-card{
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.008));
+  border:1px solid var(--glass-border); border-radius:var(--radius); padding:20px; backdrop-filter:blur(var(--glass-blur)) saturate(1.1);
+  box-shadow: 0 12px 40px rgba(2,6,23,0.65), inset 0 1px 0 var(--glass-inset);
+}
+.header{display:flex; justify-content:space-between; align-items:center; gap:12px}
+.title{font-size:20px; margin:0; background:linear-gradient(90deg,#9cd6ff,#80ffd4); -webkit-background-clip:text; color:transparent}
+.subtitle{font-size:13px; color:var(--muted); margin-top:6px}
+.controls{display:flex; gap:8px}
+.icon-btn{background:transparent; border:1px solid rgba(255,255,255,0.06); padding:8px; border-radius:10px; cursor:pointer; color:inherit}
+
+/* Input area */
+.input-area{display:flex; gap:12px; margin-top:18px}
+.input{flex:1; padding:14px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.06); background:rgba(255,255,255,0.02); color:inherit; font-size:15px}
+.scan-btn{padding:12px 16px; border-radius:12px; background:linear-gradient(180deg,var(--accent),#0076d6); color:#071322; font-weight:700; border:none; cursor:pointer}
+
+/* scanner area */
+.scanner{margin-top:18px; display:flex; gap:14px; align-items:center}
+.radar{width:220px; height:220px; border-radius:50%; position:relative; overflow:hidden; background:radial-gradient(circle at 35% 30%, rgba(85,170,255,0.06), transparent 20%), rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.04)}
+.radar::after{content:""; position:absolute; inset:0; background:conic-gradient(from 120deg at 50% 50%, rgba(85,170,255,0.06), transparent 30%); mix-blend-mode:screen; animation:spin 4s linear infinite}
+@keyframes spin{from{transform:rotate(0deg)} to{transform:rotate(360deg)}}
+.radar .pulse{position:absolute; inset:0; border-radius:50%; box-shadow:0 0 0 1px rgba(85,170,255,0.06) inset;}
+.radar .blip{position:absolute; width:10px; height:10px; background:var(--danger); border-radius:50%; transform:translate(-50%,-50%); box-shadow:0 4px 14px rgba(255,107,107,0.26)}
+
+/* right panel */
+.side{display:flex; flex-direction:column; gap:12px}
+.summary{display:flex; gap:12px; align-items:center}
+.stat{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.03); flex:1}
+.stat h3{margin:0; font-size:14px}
+.stat p{margin:6px 0 0; color:var(--muted); font-size:13px}
+
+/* history */
+.history{margin-top:12px}
+.history-list{margin:10px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px}
+.history-item{display:flex; justify-content:space-between; gap:12px; background:rgba(0,0,0,0.18); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); color:var(--muted)}
+
+/* waveform */
+.wave-wrap{height:90px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border-radius:10px; padding:10px}
+canvas{width:100%; height:80px}
+
+/* mini charts */
+.mini-chart{height:120px; border-radius:10px; padding:8px; background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
+.bar{height:10px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden}
+.bar > i{display:block; height:100%; background:linear-gradient(90deg,var(--accent), var(--accent-2)); border-radius:999px}
+
+/* footer */
+.footer{display:flex; justify-content:space-between; align-items:center; margin-top:14px; color:var(--muted); font-size:13px}
+
+/* Light mode */
+body.light{color:#071322; background:linear-gradient(120deg,#e8f6ff 0%, #fdfdfd 60%)}
+body.light .glass-card{background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.85)); border:1px solid rgba(11,18,32,0.04)}
+
+/* responsive */
+@media (max-width:980px){.container{grid-template-columns:1fr; padding-bottom:30px}.radar{width:180px;height:180px}}
+</style>
+</head>
+<body>
+<div class="particles" aria-hidden="true"></div>
+<div class="container">
+  <div class="glass-card" id="mainCard">
+    <div class="header">
+      <div>
+        <h1 class="title">⚡ Fraud &amp; Phishing Lab</h1>
+        <div class="subtitle">Real-time scanner • heuristic checks • audio/visual feedback</div>
+      </div>
+      <div class="controls">
+        <button class="icon-btn" id="themeToggle" title="Toggle light/dark">🌗</button>
+        <button class="icon-btn" id="helpBtn" title="Quick tips">❔</button>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <input id="urlInput" class="input" type="text" placeholder="https://example.com/path — paste a link to scan" aria-label="URL input" />
+      <button class="scan-btn" id="scanBtn">Scan</button>
+    </div>
+
+    <div class="scanner" aria-hidden="false">
+      <div class="radar" id="radar" role="img" aria-label="Scanner radar">
+        <div class="pulse"></div>
+        <!-- blips injected here -->
+      </div>
+
+      <div style="flex:1">
+        <div class="wave-wrap">
+          <canvas id="wave"></canvas>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:12px">
+          <div class="mini-chart" style="flex:1">
+            <div style="display:flex; justify-content:space-between"><small>Heuristic Score</small><strong id="heuristicVal">—</strong></div>
+            <div style="height:8px;margin-top:8px" class="bar"><i id="heuristicBar" style="width:0%"></i></div>
+          </div>
+          <div class="mini-chart" style="width:140px">
+            <small>Cert Check</small>
+            <div style="margin-top:8px" id="certStatus">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultArea" style="margin-top:14px"></div>
+
+    <div class="footer">
+      <div id="notes">Ready — press <strong>Enter</strong> to scan</div>
+      <div>Hackathon UI — <em>Enhanced</em></div>
+    </div>
+  </div>
+
+  <aside class="side">
+    <div class="glass-card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h3 style="margin:0">Live Summary</h3>
+        <small style="color:var(--muted)" id="lastScan">—</small>
+      </div>
+
+      <div class="summary" style="margin-top:12px">
+        <div class="stat">
+          <h3 id="scanCount">Scans: 0</h3>
+          <p>Total scans this session</p>
+        </div>
+        <div class="stat">
+          <h3 id="threatCount">Threats: 0</h3>
+          <p>Potentially dangerous links</p>
+        </div>
+      </div>
+
+      <div class="history">
+        <h4 style="margin:12px 0 0">History</h4>
+        <ul class="history-list" id="historyList" aria-live="polite"></ul>
+      </div>
+    </div>
+
+    <div class="glass-card">
+      <h4 style="margin:0">Quick Insights</h4>
+      <p class="subtitle" style="margin-top:8px">Automated heuristics, domain age check (mock), certificate validation, and ML-like scoring (mocked for demo).</p>
+
+      <div style="margin-top:12px">
+        <small style="color:var(--muted)">Recent trends</small>
+        <div style="height:66px; margin-top:8px; display:flex; flex-direction:column; justify-content:center; gap:8px">
+          <div style="display:flex; gap:8px; align-items:center"><small style="width:80px">Phishing</small><div class="bar" style="flex:1"><i style="width:36%"></i></div></div>
+          <div style="display:flex; gap:8px; align-items:center"><small style="width:80px">Spam</small><div class="bar" style="flex:1"><i style="width:22%"></i></div></div>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+</div>
+
+<script>
+// --- Particles ---
+(function(){const root=document.querySelector('.particles'); for(let i=0;i<40;i++){const d=document.createElement('div');d.className='particle'; d.style.left=Math.random()*100+'vw'; d.style.top=90+Math.random()*20+'vh'; d.style.opacity=0.6*Math.random(); d.style.width=2+Math.random()*8+'px'; d.style.height=d.style.width; d.style.animationDuration=6+Math.random()*8+'s'; d.style.animationDelay=(Math.random()*-8)+'s'; d.style.transform='translateY(0)'; d.style.animationName='floatUp'; root.appendChild(d);} })();
+
+// --- Utilities ---
+const $ = id => document.getElementById(id);
+let scanCount=0, threatCount=0;
+
+// --- Waveform (Canvas) ---
+const waveCanvas = $('wave'); const wctx = waveCanvas.getContext('2d'); function resizeCanvas(){waveCanvas.width = waveCanvas.clientWidth * devicePixelRatio; waveCanvas.height = waveCanvas.clientHeight * devicePixelRatio; wctx.scale(devicePixelRatio, devicePixelRatio);} window.addEventListener('resize', resizeCanvas); resizeCanvas();
+let waveAmp=0;
+function drawWave(){const cw = waveCanvas.clientWidth; const ch = waveCanvas.clientHeight; wctx.clearRect(0,0,waveCanvas.width,waveCanvas.height); wctx.beginPath(); const mid = ch/2; wctx.moveTo(0,mid);
+ for(let x=0;x<cw;x+=2){const y = mid + Math.sin((x/15) + performance.now()/500) * (8 + waveAmp*18); wctx.lineTo(x,y);} wctx.strokeStyle = 'rgba(130,200,255,0.85)'; wctx.lineWidth=2; wctx.stroke(); requestAnimationFrame(drawWave);} requestAnimationFrame(drawWave);
+
+// --- Radar blips ---
+const radar = $('radar'); function showBlip(xPct,yPct,type='danger'){const b=document.createElement('div'); b.className='blip'; b.style.left = (xPct*100)+'%'; b.style.top = (yPct*100)+'%'; if(type==='safe'){b.style.background='linear-gradient(90deg,var(--accent),var(--accent-2))'; b.style.boxShadow='0 6px 20px rgba(120,220,255,0.12)'} radar.appendChild(b); setTimeout(()=>{b.animate([{transform:'scale(0.4)',opacity:1},{transform:'scale(1.4)',opacity:0}],{duration:1600,easing:'ease-out'}); setTimeout(()=>b.remove(),1600)},50); }
+
+// --- Mocked checks and heuristics ---
+const suspiciousWords = ["free-money","login-now","verify","update-info","bank-alert","password-reset","claim","gift","win","signin","secure","account-update","confirm"];
+function heuristicScore(url){let score=0; if(!/^https?:\/\//.test(url)) score+=30; suspiciousWords.forEach(s=>{ if(url.includes(s)) score+=30; });
+ const lenPenalty = Math.max(0, (url.length-50)/2); score += Math.min(25, lenPenalty);
+ return Math.min(100, Math.round(score)); }
+
+function certCheck(url){ // mock: treat https as good
+  try{ const secure = url.startsWith('https://'); return secure ? 'Valid (HTTPS)' : 'No HTTPS'; }catch(e){return 'Unknown'} }
+
+// --- Audio feedback ---
+const audioCtx = new (window.AudioContext||window.webkitAudioContext)(); function beep(freq, time=0.08){const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.type='sine'; o.frequency.value = freq; g.gain.value = 0.0001; o.connect(g); g.connect(audioCtx.destination); o.start(); g.gain.exponentialRampToValueAtTime(0.07, audioCtx.currentTime+0.01); g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+time); setTimeout(()=>o.stop(), (time+0.02)*1000); }
+
+// --- History storage ---
+function addHistory(entry){const list = $('historyList'); const li = document.createElement('li'); li.className='history-item'; li.innerHTML = `<div><strong>${entry.url}</strong><div style="color:var(--muted);font-size:12px">${entry.time}</div></div><div style="text-align:right"><div style="font-weight:700;color:${entry.threat? 'var(--danger)':'var(--safe)'}">${entry.threat? 'Threat':'Safe'}</div><div style="color:var(--muted);font-size:12px">${entry.score}%</div></div>`; list.prepend(li); localStorage.setItem('scanHistory', list.innerHTML); }
+function loadHistory(){const list = $('historyList'); const saved=localStorage.getItem('scanHistory'); if(saved) list.innerHTML = saved; }
+loadHistory();
+
+// --- Scan logic ---
+function renderResult({url,score,threat,cert}){
+  const ra = $('resultArea'); const now = new Date(); const time=now.toLocaleString(); $('lastScan').textContent=time;
+  const html = `<div style="display:flex;justify-content:space-between;align-items:center"><div><strong>${threat? '⚠ Potential Threat Detected':'✔ Looks Safe'}</strong><div style="color:var(--muted);font-size:13px;margin-top:6px">${cert} — heuristic score ${score}%</div></div><div style="text-align:right"><small style=\"color:var(--muted)\">Scanned</small><div style=\"font-weight:700;margin-top:6px\">${time}</div></div></div>`;
+  ra.innerHTML = html;
+  // set visuals
+  $('heuristicVal').textContent = score+'%'; $('heuristicBar').style.width = score+'%';
+  if(threat){ ra.querySelector('strong').style.color='var(--danger)'; beep(220,0.12); showBlip(Math.random()*0.9, Math.random()*0.9,'danger'); threatCount++; $('threatCount').textContent = 'Threats: '+threatCount; }
+  else{ ra.querySelector('strong').style.color='var(--safe)'; beep(880,0.08); showBlip(0.5+Math.random()*0.4, 0.3+Math.random()*0.4,'safe'); }
+  scanCount++; $('scanCount').textContent = 'Scans: '+scanCount; addHistory({url,time,score,threat}); }
+
+// main scan
+function scanURL(urlRaw){ if(!urlRaw) return; const url = urlRaw.trim().toLowerCase(); const score = heuristicScore(url); const cert = certCheck(url); const threat = score>45 || cert!=='Valid (HTTPS)'; // thresholds mocked
+  // visual amplitude
+  waveAmp = Math.min(1, score/100);
+  // animate card
+  const card = document.getElementById('mainCard'); card.animate([{transform:'translateY(0)'},{transform:'translateY(-6px)'}],{duration:220, direction:'alternate', iterations:2});
+  renderResult({url,score,threat,cert}); }
+
+// UI bindings
+$('scanBtn').addEventListener('click', ()=>{ const v=$('urlInput').value; if(!v){alert('Please paste a URL to scan'); return;} scanURL(v); });
+$('urlInput').addEventListener('keydown', (e)=>{ if(e.key==='Enter'){ e.preventDefault(); $('scanBtn').click(); } });
+
+// theme toggle
+const themeToggle = $('themeToggle'); themeToggle.addEventListener('click', ()=>{ document.body.classList.toggle('light'); });
+
+// help
+$('helpBtn').addEventListener('click', ()=>{ alert('Tips:\n• Paste a full URL (with http/https)\n• Heuristic score >45 flagged as risky (demo)\n• This is a UI mock — do not rely on it for real security decisions.'); });
+
+// auto demo: add a few blips
+setTimeout(()=>{showBlip(0.32,0.24,'danger'); showBlip(0.7,0.5,'safe'); showBlip(0.45,0.78,'danger');},800);
+
+// accessibility: announce counts
+setInterval(()=>{document.getElementById('notes').textContent = `Scans: ${scanCount} • Threats: ${threatCount}`},2000);
+
+// keyboard shortcuts
+window.addEventListener('keydown',(e)=>{ if(e.ctrlKey && e.key.toLowerCase()==='k'){ e.preventDefault(); $('urlInput').focus(); } });
+
+</script>
+</body>
+</html>
