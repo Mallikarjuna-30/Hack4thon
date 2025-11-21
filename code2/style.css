@@ -1,0 +1,6 @@
+body{font-family:Inter, Arial, sans-serif;margin:0;padding:12px;width:300px}
+.popup h2{margin:0 0 8px 0;font-size:18px}
+#status{font-size:13px;margin-bottom:8px}
+#details div{font-size:13px;margin-top:4px}
+button{padding:8px 10px;border-radius:8px;border:0;background:#2f6cff;color:white;cursor:pointer}
+

@@ -1,4 +1,4 @@
-// -------------------- UTIL / UI HELPERS --------------------
+
 const $ = id => document.getElementById(id);
 
 function nowISO() {
@@ -20,7 +20,7 @@ function loadHistory() {
   } catch { return []; }
 }
 
-// -------------------- PHISHING CHECK FUNCTION (IMPROVED) --------------------
+
 function checkPhishing(inputUrl) {
   const reasons = [];
   if (!inputUrl || typeof inputUrl !== "string") {
@@ -59,7 +59,7 @@ function checkPhishing(inputUrl) {
     reasons.push("URL is unusually long");
   }
 
-  // 3. Contains @
+  
   if (fullLower.includes("@")) {
     reasons.push("Contains '@' symbol — may mask real domain");
   }
