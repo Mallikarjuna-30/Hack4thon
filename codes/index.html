@@ -1,25 +1,53 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phishing URL Detector</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Phishing URL Detector — Glass UI</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <main class="page">
+    <div class="glass-card" role="region" aria-labelledby="appTitle">
+      <header class="card-header">
+        <div class="title-group">
+          <h1 id="appTitle">🔍 Phishing URL Detector</h1>
+          <p class="subtitle">Frosted glass UI — fast, secure, and responsive</p>
+        </div>
 
-    <div class="container">
-        <h1>🔍 Phishing URL Detector</h1>
+        <div class="controls">
+          <button id="toggleMode" class="icon-btn" aria-pressed="false" title="Toggle light/dark">
+            ☀️
+          </button>
+        </div>
+      </header>
 
-        <input type="text" id="urlInput" placeholder="Enter a URL to analyze...">
+      <section class="card-body">
+        <label for="urlInput" class="sr-only">Enter URL to analyze</label>
+        <div class="input-row">
+          <input id="urlInput" type="text" placeholder="Enter URL (e.g. https://example.com)" aria-label="URL to analyze" />
+          <button id="analyzeBtn" class="primary-btn" title="Analyze URL">Check</button>
+        </div>
 
-        <button onclick="analyzeURL()">Check URL</button>
+        <div id="hint" class="hint">Tip: Paste a URL and press Enter or click Check</div>
 
-        <div id="result"></div>
+        <div id="result" class="result-rail" aria-live="polite"></div>
 
-        <button id="toggleMode" class="mode-btn">☀️ Light Mode</button>
+        <div class="actions-row">
+          <button id="copyBtn" class="small-btn" title="Copy latest result">Copy Result</button>
+          <button id="clearBtn" class="small-btn" title="Clear history">Clear History</button>
+        </div>
+
+        <h2 class="history-title">History</h2>
+        <ul id="historyList" class="history-list" aria-live="polite"></ul>
+      </section>
+
+      <footer class="card-footer">
+        <small>Built for hackathons — improved detections, minimal false positives.</small>
+      </footer>
     </div>
+  </main>
 
-    <script src="script.js"></script>
+  <script src="script.js" defer></script>
 </body>
 </html>
