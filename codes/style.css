@@ -1,118 +1,117 @@
-* {
+/* -------------------- GENERAL STYLES -------------------- */
+body {
     margin: 0;
     padding: 0;
-    font-family: "Poppins", sans-serif;
-}
-
-body {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    font-family: Arial, sans-serif;
+    background: #121212;
     color: white;
+    transition: 0.3s;
 }
 
 .container {
     width: 400px;
-    text-align: center;
+    margin: 70px auto;
+    padding: 25px;
+    border-radius: 12px;
+    background: #1e1e1e;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
 }
 
 h1 {
-    font-size: 32px;
-    margin-bottom: 10px;
-}
-
-.subtitle {
-    opacity: 0.8;
+    text-align: center;
     margin-bottom: 20px;
 }
 
-.card {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 25px;
-    border-radius: 15px;
-    backdrop-filter: blur(6px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-}
-
-.card input {
-    width: 90%;
+/* -------------------- INPUT BOX -------------------- */
+input {
+    width: 100%;
     padding: 12px;
-    border-radius: 8px;
-    border: none;
     margin-bottom: 15px;
-    font-size: 16px;
-    outline: none;
-}
-
-.card button {
-    width: 95%;
-    padding: 12px;
-    background: #22c55e;
-    border: none;
     border-radius: 8px;
-    font-size: 17px;
+    border: none;
+    background: #2a2a2a;
     color: white;
+    font-size: 15px;
+}
+
+input::placeholder {
+    color: #aaa;
+}
+
+/* -------------------- BUTTONS -------------------- */
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    border: none;
+    background: #00aaff;
+    color: white;
+    font-size: 16px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: 0.3s;
+    transition: 0.2s;
 }
 
-.card button:hover {
-    background: #16a34a;
+button:hover {
+    background: #0088cc;
 }
 
+.mode-btn {
+    background: #444;
+    margin-top: 15px;
+}
+
+.mode-btn:hover {
+    background: #666;
+}
+
+/* -------------------- RESULT BOX -------------------- */
 #result {
-    margin-top: 20px;
-    font-size: 18px;
-}
-
-.safe {
-    color: #00ff90;
-    font-weight: bold;
+    margin-top: 15px;
+    padding: 10px;
+    border-radius: 8px;
 }
 
 .danger {
-    color: #ff4b4b;
+    color: #ff4d4d;
     font-weight: bold;
 }
-/* Toggle button */
-#toggleMode {
-    margin-bottom: 15px;
-    padding: 8px 15px;
+
+.safe {
+    color: #4dff68;
+    font-weight: bold;
+}
+
+ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+/* -------------------- LIGHT MODE -------------------- */
+body.light-mode {
+    background: #f5f5f5;
+    color: black;
+}
+
+body.light-mode .container {
     background: white;
     color: black;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: 0.3s;
 }
 
-#toggleMode:hover {
-    opacity: 0.8;
-}
-
-/* Light mode background */
-.light-mode {
-    background: linear-gradient(135deg, #f3f4f6, #e5e7eb) !important;
-    color: black !important;
-}
-
-.light-mode .card {
-    background: rgba(0,0,0,0.05);
+body.light-mode input {
+    background: #ddd;
     color: black;
 }
 
-.light-mode #toggleMode {
-    background: black;
+body.light-mode button {
+    background: #0066cc;
+}
+
+body.light-mode button:hover {
+    background: #004c99;
+}
+
+body.light-mode .mode-btn {
+    background: #222;
     color: white;
-}
-
-.light-mode .safe {
-    color: #16a34a;
-}
-
-.light-mode .danger {
-    color: #dc2626;
 }

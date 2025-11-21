@@ -1,25 +1,24 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Phishing URL Detector</title>
     <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="container">
-    <h1>🔐 Phishing URL Detector</h1>
-    <button id="toggleMode">🌙 Dark Mode</button>
-    <p class="subtitle">Check if a URL looks suspicious or unsafe</p>
+    <div class="container">
+        <h1>🔍 Phishing URL Detector</h1>
 
-    <div class="card">
-        <input type="text" id="urlInput" placeholder="Enter URL to check...">
+        <input type="text" id="urlInput" placeholder="Enter a URL to analyze...">
+
         <button onclick="analyzeURL()">Check URL</button>
+
+        <div id="result"></div>
+
+        <button id="toggleMode" class="mode-btn">☀️ Light Mode</button>
     </div>
-
-    <div id="result"></div>
-</div>
-
 
     <script src="script.js"></script>
 </body>
