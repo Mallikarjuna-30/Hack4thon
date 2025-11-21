@@ -1,0 +1,102 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Ultra Premium Phishing Scanner</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+body{background:#0a0a0a;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;transition:.4s}
+.container{width:100%;max-width:620px;background:rgba(255,255,255,0.05);backdrop-filter:blur(12px);border-radius:22px;padding:30px;box-shadow:0 0 40px rgba(0,255,255,0.15);transition:.4s}
+h1{text-align:center;margin-bottom:20px;font-size:28px;letter-spacing:1px}
+.inputBox{display:flex;gap:10px;margin-bottom:20px}
+input{flex:1;padding:14px;border:none;border-radius:12px;background:rgba(255,255,255,0.07);color:#fff;font-size:15px;outline:none}
+button{padding:14px 20px;background:#00eaff;border:none;border-radius:12px;font-weight:bold;cursor:pointer;transition:.3s}
+button:hover{opacity:.8}
+#resultCard{padding:20px;background:rgba(255,255,255,0.06);border-radius:16px;margin-top:20px;display:none}
+.badge{padding:6px 14px;border-radius:8px;font-size:14px;font-weight:bold;display:inline-block;margin-bottom:10px}
+.safe{background:#00c853}
+.medium{background:#ffb300}
+.high{background:#ff3d00}
+.rulesList{margin-top:10px;font-size:14px;line-height:1.5;opacity:0.85}
+.toggle{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.1);padding:10px 16px;border-radius:12px;cursor:pointer;transition:.3s}
+.radar{width:180px;height:180px;border:2px solid #00eaff;border-radius:50%;margin:20px auto;position:relative;overflow:hidden;display:none}
+.line{position:absolute;width:100%;height:100%;background:conic-gradient(from 0deg,#00eaff22,#00eaff);animation:spin 2s linear infinite}
+@keyframes spin{100%{transform:rotate(360deg)}}
+.light{background:#f4f4f4;color:#000}
+.light .container{background:rgba(0,0,0,0.05);color:#000}
+.light input{background:rgba(0,0,0,0.09);color:#000}
+.light .toggle{background:rgba(0,0,0,0.1)}
+</style>
+</head>
+<body>
+<div class="toggle" onclick="toggleTheme()">🌙</div>
+<div class="container">
+<h1>Ultra‑Premium AI Phishing Scanner 🚨</h1>
+
+<div class="inputBox">
+<input id="urlInput" placeholder="Paste any URL to scan…">
+<button onclick="scanURL()">Scan</button>
+</div>
+
+<div id="radar" class="radar"><div class="line"></div></div>
+
+<div id="resultCard">
+<div id="riskBadge" class="badge"></div>
+<h3 id="riskTitle"></h3>
+<div class="rulesList" id="reasonList"></div>
+</div>
+
+</div>
+
+<script>
+let light=false;
+function toggleTheme(){
+light=!light;
+document.body.classList.toggle("light");
+document.querySelector(".toggle").innerHTML=light?"🌞":"🌙";
+}
+
+function scanURL(){
+let url=document.getElementById("urlInput").value.trim().toLowerCase();
+if(!url){alert("Enter a URL first.");return;}
+document.getElementById("radar").style.display="block";
+document.getElementById("resultCard").style.display="none";
+
+setTimeout(()=>{process(url)},1500);
+}
+
+function process(url){
+let score=0,reasons=[];
+
+const s=[
+[/free|win|bonus|gift|offer|money/,"Contains suspicious keywords (+20)",20],
+[/login|verify|update|secure/,"Sensitive-action words found (+15)",15],
+[/\d{1,3}\.\d{1,3}\.\d{1,3}/,"IP‑based URL (+25)",25],
+[/-{2,}|_{2,}/,"Multiple strange separators (+10)",10],
+[/@[a-z]/,"@ symbol used incorrectly (+30)",30],
+[/\.xyz|\.top|\.monster|\.click/,"High‑risk domain extension (+15)",15],
+[/\.ru|\.cn|\.tk/,"Unsafe TLD patterns (+20)",20],
+[/:\/\/(?!www\.)/,"HTTPS missing or invalid structure (+25)",25],
+[/percent|cheap|crypto|profit/,"Scam‑target keywords (+15)",15],
+[/\?.{35,}/,"Suspiciously long query string (+10)",10]
+];
+
+s.forEach(([r,m,p])=>{if(r.test(url)){score+=p;reasons.push(m);}});
+
+score=Math.min(score,100);
+showResult(score,reasons);
+}
+
+function showResult(score,reasons){
+document.getElementById("radar").style.display="none";
+let badge=document.getElementById("riskBadge");
+let title=document.getElementById("riskTitle");
+let list=document.getElementById("reasonList");
+
+if(score<30){badge.className="badge safe";badge.innerHTML="LOW RISK";title.innerHTML="Looks Safe ✔";}
+else if(score<70){badge.className="badge medium";badge.innerHTML="MEDIUM RISK";title.innerHTML="Be Careful ⚠";}
+else{badge.className="badge high";badge.innerHTML="HIGH RISK";title.innerHTML="Highly Dangerous ❌";}
+
+list.innerHTML=reasons.length?reasons.map(r=>"• "+r).join("<br>"):"No suspicious patterns detected.";
+
+document.getElementById("resultCard").style.display="block";
+}
+</script>
+</body>
+</html>
