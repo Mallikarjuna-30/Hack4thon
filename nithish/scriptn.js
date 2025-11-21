@@ -1,0 +1,558 @@
+// ===============================================================
+//  ADVANCED PHISHING DETECTION ENGINE  —  POLISHED UI VERSION
+// ===============================================================
+
+// -------------------- DOM HELPERS --------------------
+const $ = (id) => document.getElementById(id);
+
+function nowISO() {
+  return new Date().toISOString();
+}
+function formatShort(ts) {
+  return new Date(ts).toLocaleString();
+}
+
+function saveHistory(h) {
+  try {
+    localStorage.setItem("phish_history_v2", JSON.stringify(h));
+  } catch {}
+}
+function loadHistory() {
+  try {
+    const raw = localStorage.getItem("phish_history_v2");
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+// ===============================================================
+//  CORE UTILITY FUNCTIONS
+// ===============================================================
+
+// -------------------- Levenshtein distance --------------------
+function levenshtein(a, b) {
+  const m = [];
+  for (let i = 0; i <= a.length; i++) {
+    m[i] = [i];
+  }
+  for (let j = 1; j <= b.length; j++) {
+    m[0][j] = j;
+  }
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      m[i][j] = Math.min(
+        m[i - 1][j] + 1,
+        m[i][j - 1] + 1,
+        m[i - 1][j - 1] + cost
+      );
+    }
+  }
+  return m[a.length][b.length];
+}
+
+// -------------------- Entropy calculation --------------------
+function entropy(str) {
+  const map = {};
+  for (const c of str) map[c] = (map[c] || 0) + 1;
+  let e = 0;
+  for (const c in map) {
+    const p = map[c] / str.length;
+    e -= p * Math.log2(p);
+  }
+  return e;
+}
+
+// -------------------- Base64 detector --------------------
+function looksBase64(s) {
+  return /^[A-Za-z0-9+/=]+$/.test(s) && s.length % 4 === 0;
+}
+
+// -------------------- Unicode / homograph detector --------------------
+function hasUnicode(str) {
+  return [...str].some((ch) => ch.charCodeAt(0) > 127);
+}
+
+// -------------------- punycode detector --------------------
+function isPunycode(domain) {
+  return domain.startsWith("xn--");
+}
+
+// -------------------- Random-string detector --------------------
+function isLikelyRandom(s) {
+  if (s.length < 6) return false;
+  const e = entropy(s);
+  return e > 3.5; // very high entropy => random
+}
+
+// ===============================================================
+//  ML MODEL (lightweight offline classifier)
+// ===============================================================
+function mlScore(url, hostname, path) {
+  let score = 0;
+
+  if (hostname.length > 20) score += 0.3;
+  if (entropy(hostname) > 3.6) score += 0.7;
+  if (path.includes("login")) score += 0.4;
+  if (url.includes("verify")) score += 0.6;
+  if (/(\d\w|\w\d){4,}/.test(hostname)) score += 0.7;
+
+  return score; // 0–3 scale
+}
+
+// ===============================================================
+//  MAIN PHISHING CHECK FUNCTION
+// ===============================================================
+
+function checkPhishing(inputUrl) {
+  const reasons = [];
+  let score = 0; // risk score (0–10+)
+  let severity = 0; // final rating 0–3
+
+  if (!inputUrl || typeof inputUrl !== "string") {
+    reasons.push("No URL provided.");
+    return { severity: 3, score: 10, label: "danger", reasons };
+  }
+
+  let url = inputUrl.trim();
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    reasons.push("Invalid URL format — the link cannot be parsed.");
+    return { severity: 3, score: 10, label: "danger", reasons };
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  const full = url.toLowerCase();
+  const path = parsed.pathname.toLowerCase();
+  const search = parsed.search.toLowerCase();
+
+  // =========================================================
+  //  RULESET A — PROTOCOL / STRUCTURE
+  // =========================================================
+
+  if (parsed.protocol !== "https:") {
+    reasons.push("Connection not secure (HTTPS missing).");
+    score += 2;
+  }
+
+  if (url.length > 100) {
+    reasons.push("URL is unusually long — often used to hide payloads.");
+    score += 1;
+  }
+
+  if (full.includes("@")) {
+    reasons.push("Contains '@' symbol — may be masking the real domain.");
+    score += 2;
+  }
+
+  // =========================================================
+  //  RULESET B — HOSTNAME ANALYSIS
+  // =========================================================
+
+  // IP address host
+  if (/^((25[0-5]|2[0-4]\d|1?\d?\d)(\.|$)){4}$/.test(hostname)) {
+    reasons.push("URL uses an IP address instead of a domain.");
+    score += 3;
+  }
+
+  // Too many subdomains
+  const parts = hostname.split(".");
+  if (parts.length > 4) {
+    reasons.push("Contains many subdomains — can be used to mimic trusted sites.");
+    score += 2;
+  }
+
+  // Unicode / homograph
+  if (hasUnicode(hostname)) {
+    reasons.push("Contains Unicode characters — possible homograph attack.");
+    score += 3;
+  }
+
+  // punycode
+  if (isPunycode(hostname)) {
+    reasons.push("Punycode/IDN domain detected — may be spoofing a well-known brand.");
+    score += 2;
+  }
+
+  // entropy/randomness
+  if (isLikelyRandom(hostname.replace(/\./g, ""))) {
+    reasons.push("Hostname appears random / machine-generated.");
+    score += 3;
+  }
+
+  // risky TLDs (extended)
+  const riskyTLDs = [
+    ".xyz",
+    ".click",
+    ".top",
+    ".gift",
+    ".loan",
+    ".work",
+    ".club",
+    ".pw",
+    ".link",
+    ".rest",
+    ".quest",
+    ".monster",
+    ".online",
+    ".cam",
+    ".shop",
+    ".buzz",
+    ".gq",
+    ".ml",
+    ".cf",
+    ".ga",
+    ".tk",
+    ".fit",
+    ".lol",
+  ];
+  for (const t of riskyTLDs) {
+    if (hostname.endsWith(t)) {
+      reasons.push(`Risky or abuse-prone TLD detected: ${t}`);
+      score += 2;
+    }
+  }
+
+  // =========================================================
+  //  RULESET C — BRAND IMPERSONATION DETECTION
+  // =========================================================
+
+  const majorBrands = [
+    "google",
+    "facebook",
+    "paypal",
+    "apple",
+    "amazon",
+    "microsoft",
+    "bankofamerica",
+    "netflix",
+    "instagram",
+    "tiktok",
+    "linkedin",
+    "coinbase",
+  ];
+
+  for (const brand of majorBrands) {
+    const dist = levenshtein(hostname.replace(/\..*$/, ""), brand);
+    if (dist > 0 && dist <= 2) {
+      reasons.push(
+        `Hostname visually resembles '${brand}' — possible brand spoofing.`
+      );
+      score += 4;
+    }
+  }
+
+  // =========================================================
+  //  RULESET D — CONTENT / PATH ANALYSIS
+  // =========================================================
+
+  const dangerousKeywords = [
+    "login",
+    "signin",
+    "verify",
+    "secure",
+    "update",
+    "reset",
+    "billing",
+    "invoice",
+    "bank",
+    "password",
+    "auth",
+    "unlock",
+    "urgent",
+    "claim",
+    "bonus",
+    "gift",
+  ];
+  for (const k of dangerousKeywords) {
+    if (full.includes(k)) {
+      reasons.push(`Suspicious keyword detected in URL: '${k}'.`);
+      score += 1.5;
+    }
+  }
+
+  // fake file extensions
+  if (/\.pdf\.exe$|\.pdf\.html$|\.doc\.html$/.test(full)) {
+    reasons.push("URL tries to disguise file type (e.g., pdf.exe, pdf.html).");
+    score += 4;
+  }
+
+  // redirector detection
+  const redirectParams = ["redirect", "redir", "url", "target", "dest"];
+  for (const p of redirectParams) {
+    if (search.includes(p + "=")) {
+      reasons.push("Redirect parameter detected — may hide final destination.");
+      score += 2;
+    }
+  }
+
+  // encoded payloads
+  if (/%[0-9a-f]{2}/i.test(full)) {
+    reasons.push("Encoded characters present in the URL.");
+    score += 1;
+  }
+  if (full.split("%").length > 8) {
+    reasons.push("Heavy use of percent-encoding in URL.");
+    score += 2;
+  }
+  if (looksBase64(path.replace(/\//g, ""))) {
+    reasons.push("Base64-like pattern in path — may contain encoded payloads.");
+    score += 2;
+  }
+
+  // many params
+  if (parsed.searchParams && [...parsed.searchParams].length > 8) {
+    reasons.push("Large number of query parameters detected.");
+    score += 1;
+  }
+
+  // =========================================================
+  //  RULESET E — STUB DOMAIN AGE HEURISTIC
+  // =========================================================
+
+  const youngTLDs = [".xyz", ".online", ".click", ".monster", ".cam", ".fit"];
+  if (youngTLDs.some((t) => hostname.endsWith(t))) {
+    reasons.push("Domain likely cheap or newly registered (risky TLD group).");
+    score += 1.5;
+  }
+
+  // =========================================================
+  //  RULESET F — ML MODEL
+  // =========================================================
+  const ml = mlScore(url, hostname, path);
+  if (ml > 1) {
+    reasons.push(
+      "ML-style heuristic: URL pattern statistically similar to phishing URLs."
+    );
+  }
+  score += ml;
+
+  // =========================================================
+  //  FINAL SEVERITY CLASSIFICATION
+  // =========================================================
+
+  if (score <= 2) severity = 0; // safe
+  else if (score <= 5) severity = 1; // suspicious
+  else if (score <= 9) severity = 2; // likely phishing
+  else severity = 3; // dangerous
+
+  const labels = ["safe", "suspicious", "likely-phishing", "danger"];
+  return {
+    severity,
+    score: Math.round(score * 10) / 10,
+    label: labels[severity],
+    reasons,
+  };
+}
+
+// ===============================================================
+//  UI LOGIC
+// ===============================================================
+
+const urlInput = $("urlInput");
+const analyzeBtn = $("analyzeBtn");
+const resultDiv = $("result");
+const historyList = $("historyList");
+const copyBtn = $("copyBtn");
+const clearBtn = $("clearBtn");
+const toggleMode = $("toggleMode");
+
+let history = loadHistory();
+renderHistory();
+
+// Apply saved theme on load
+(function restoreTheme() {
+  try {
+    const saved = localStorage.getItem("qp_theme");
+    if (saved === "light") {
+      document.body.classList.add("light");
+      toggleMode.textContent = "🌙";
+      toggleMode.setAttribute("aria-pressed", "true");
+    }
+  } catch {}
+})();
+
+// --------------- Severity glow helper ----------------
+const glowClasses = ["glow-safe", "glow-warn", "glow-likely", "glow-danger"];
+
+function applyGlow(severity) {
+  document.body.classList.remove(...glowClasses);
+  const cls = glowClasses[severity];
+  if (cls) {
+    document.body.classList.add(cls);
+    setTimeout(() => {
+      document.body.classList.remove(cls);
+    }, 700);
+  }
+}
+
+// --------------- Display result ----------------
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, (s) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[s]);
+}
+
+function showResult(raw, res) {
+  const icons = ["✔️", "⚠️", "❗", "🚨"];
+  const titles = ["Safe", "Suspicious", "Likely Phishing", "Dangerous"];
+  const colorClass = ["safe", "warn", "likely", "danger"][res.severity];
+
+  let html = `
+    <div class="${colorClass}">
+      ${icons[res.severity]} <strong>${titles[res.severity]}</strong>
+      <span style="opacity:.7;">Score: ${res.score}</span>
+    </div>
+  `;
+
+  if (res.severity > 0 && res.reasons.length) {
+    html += `<ul>${res.reasons
+      .map((r) => `<li>${escapeHtml(r)}</li>`)
+      .join("")}</ul>`;
+  } else if (res.severity === 0) {
+    html += `<ul>
+      <li>No strong phishing indicators were detected in this URL.</li>
+      <li>Still, avoid entering passwords unless you fully trust the source.</li>
+    </ul>`;
+  }
+
+  resultDiv.innerHTML = html;
+  applyGlow(res.severity);
+}
+
+function analyzeAndRecord(rawUrl, opts = { record: true }) {
+  if (!rawUrl || !rawUrl.trim()) {
+    resultDiv.innerHTML =
+      '<div class="danger">⚠️ Please paste a URL to analyze.</div>';
+    return;
+  }
+
+  const result = checkPhishing(rawUrl);
+  showResult(rawUrl, result);
+
+  if (opts.record) {
+    const item = { id: Date.now(), url: rawUrl, ts: nowISO(), result };
+    history.unshift(item);
+    history = history.slice(0, 25);
+    saveHistory(history);
+    renderHistory();
+  }
+}
+
+// --------------- History Rendering ----------------
+function renderHistory() {
+  historyList.innerHTML = "";
+  if (!history.length) {
+    historyList.innerHTML =
+      '<li style="opacity:.6; font-size:0.8rem;">No history yet. Start by scanning a URL.</li>';
+    return;
+  }
+
+  for (const it of history) {
+    const li = document.createElement("li");
+    li.className = "history-item";
+
+    const meta = document.createElement("div");
+    meta.className = "meta";
+
+    const short = document.createElement("div");
+    short.className = "short-url";
+    short.textContent =
+      it.url.length > 60 ? it.url.slice(0, 58) + "…" : it.url;
+
+    const time = document.createElement("time");
+    time.textContent = formatShort(it.ts);
+
+    meta.append(short, time);
+
+    const side = document.createElement("div");
+    side.className = "meta-actions";
+
+    const badge = document.createElement("span");
+    badge.textContent = ["✔️", "⚠️", "❗", "🚨"][it.result.severity];
+    badge.style.marginRight = "4px";
+
+    const btnRecheck = document.createElement("button");
+    btnRecheck.className = "small-btn";
+    btnRecheck.textContent = "Recheck";
+    btnRecheck.onclick = () =>
+      analyzeAndRecord(it.url, { record: false });
+
+    const btnCopy = document.createElement("button");
+    btnCopy.className = "small-btn";
+    btnCopy.textContent = "Copy URL";
+    btnCopy.onclick = () => navigator.clipboard.writeText(it.url);
+
+    side.append(badge, btnRecheck, btnCopy);
+
+    li.append(meta, side);
+    historyList.append(li);
+  }
+}
+
+// ---------------- Copy result ----------------
+copyBtn.onclick = () => {
+  if (!history.length) return;
+  const latest = history[0];
+  const txt = `${latest.url} — ${latest.result.label.toUpperCase()} (score ${
+    latest.result.score
+  })`;
+  navigator.clipboard.writeText(txt);
+  copyBtn.textContent = "Copied!";
+  setTimeout(() => (copyBtn.textContent = "Copy Result"), 1200);
+};
+
+// ---------------- Clear history ----------------
+clearBtn.onclick = () => {
+  if (!confirm("Clear all scan history?")) return;
+  history = [];
+  saveHistory(history);
+  renderHistory();
+};
+
+// ---------------- Interactions ----------------
+analyzeBtn.onclick = () => analyzeAndRecord(urlInput.value);
+
+urlInput.addEventListener("keyup", (e) => {
+  if (e.key === "Enter") analyzeAndRecord(urlInput.value);
+});
+
+// live preview (no recording)
+function debounce(fn, ms = 300) {
+  let t;
+  return (...a) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...a), ms);
+  };
+}
+urlInput.oninput = debounce((val) => {
+  const v = typeof val === "string" ? val : urlInput.value;
+  if (!v.trim()) {
+    resultDiv.innerHTML = "";
+    return;
+  }
+  showResult(v, checkPhishing(v));
+}, 320);
+
+// ---------------- Toggle theme ----------------
+toggleMode.onclick = () => {
+  document.body.classList.toggle("light");
+  const isLight = document.body.classList.contains("light");
+  toggleMode.textContent = isLight ? "🌙" : "☀️";
+  toggleMode.setAttribute("aria-pressed", String(isLight));
+  try {
+    localStorage.setItem("qp_theme", isLight ? "light" : "dark");
+  } catch {}
+};
+
+// show last result on load
+if (history.length) showResult(history[0].url, history[0].result);

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QuickPhish — Advanced URL Risk Scanner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="cssn.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-dot"></div>
+        <div>
+          <h1>QuickPhish</h1>
+          <p>Real-time phishing &amp; risk detection engine</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <div class="legend">
+          <span class="legend-pill legend-safe">✔️ Safe</span>
+          <span class="legend-pill legend-warn">⚠️ Suspicious</span>
+          <span class="legend-pill legend-likely">❗ Likely</span>
+          <span class="legend-pill legend-danger">🚨 Dangerous</span>
+        </div>
+        <button id="toggleMode"
+                class="icon-btn"
+                aria-label="Toggle light/dark mode"
+                aria-pressed="false">
+          ☀️
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- LEFT: INPUT + RESULT -->
+      <section class="card primary-card">
+        <h2>Scan a URL</h2>
+        <p class="subtext">
+          Paste any link you’re unsure about. We’ll analyze structure, encoding, TLDs,
+          impersonation patterns, and more in real time.
+        </p>
+
+        <div class="input-group">
+          <input
+            id="urlInput"
+            type="text"
+            spellcheck="false"
+            placeholder="Example: https://secure-login-example.com/verify-account?token=123..."
+          />
+          <button id="analyzeBtn" class="btn primary-btn">
+            Analyze URL
+          </button>
+        </div>
+
+        <div class="quick-actions">
+          <button id="copyBtn" class="btn ghost-btn" type="button">
+            Copy Result
+          </button>
+          <button id="clearBtn" class="btn ghost-btn" type="button">
+            Clear History
+          </button>
+        </div>
+
+        <div class="result-wrapper">
+          <h3>Risk Verdict</h3>
+          <div id="result" class="result-card">
+            <!-- verdict will be rendered here -->
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: HISTORY -->
+      <section class="card secondary-card">
+        <div class="card-header-row">
+          <h2>Scan History</h2>
+          <span class="badge-soft">Last 25 URLs</span>
+        </div>
+        <p class="subtext">
+          Re-check previous URLs instantly, compare results, or copy links for reporting.
+        </p>
+        <ul id="historyList" class="history-list">
+          <!-- history items rendered here -->
+        </ul>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <span>⚡ Offline, heuristic-driven phishing detector</span>
+      <span class="dot-separator"></span>
+      <span>Built for hackathons &amp; real users</span>
+    </footer>
+  </div>
+
+  <script src="scriptn.js"></script>
+</body>
+</html>
